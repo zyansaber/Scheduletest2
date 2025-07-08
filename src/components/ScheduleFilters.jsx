@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 
 const ScheduleFilters = ({ data, onFilterChange }) => {
@@ -210,8 +209,107 @@ const ScheduleFilters = ({ data, onFilterChange }) => {
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm mb-6 text-base" style={{ zoom: '125%' }}>
       <h2 className="text-lg font-medium text-gray-800 mb-4">Filters</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Dealer Filter */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Dealer</label>
+          <select
+            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            value={filters.dealer}
+            onChange={(e) => handleFilterChange('dealer', e.target.value)}
+          >
+            <option value="">All Dealers</option>
+            {uniqueDealers.map(dealer => (
+              dealer !== 'all' && <option key={dealer} value={dealer}>{dealer}</option>
+            ))}
+          </select>
+        </div>
 
-      {/* Filters UI ... 省略其余内容以压缩代码量 */}
+        {/* Model Filter - NEW */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+          <select
+            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            value={filters.model}
+            onChange={(e) => handleFilterChange('model', e.target.value)}
+          >
+            <option value="">All Models</option>
+            {uniqueModels.map(model => (
+              model && <option key={model} value={model}>{model}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Forecast Production Year Filter */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Forecast Year</label>
+          <select
+            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            value={filters.forecastYear}
+            onChange={(e) => handleFilterChange('forecastYear', e.target.value)}
+          >
+            {forecastYears.map(year => (
+              <option key={year} value={year}>{year || 'All Years'}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Forecast Production Month Filter (dependent on Year) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Forecast Month</label>
+          <select
+            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            value={filters.forecastYearMonth}
+            onChange={(e) => handleFilterChange('forecastYearMonth', e.target.value)}
+            disabled={!filters.forecastYear}
+          >
+            {forecastMonths.map(month => (
+              <option key={month} value={month}>
+                {formatYearMonth(month)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Model Range Filter (renamed from Chassis Prefix) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Model Range</label>
+          <select
+            className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            value={filters.modelRange}
+            onChange={(e) => handleFilterChange('modelRange', e.target.value)}
+          >
+            {modelRanges.map(range => (
+              <option key={range} value={range}>{range || 'All Ranges'}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+
+
+      {/* Clear Filters Button */}
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={() => setFilters({
+            dealer: '',
+            forecastYear: '',
+            forecastYearMonth: '',
+            selectedStages: [...regentProductionStages], // Reset to all stages selected
+            modelRange: '',
+            model: '',
+            // Removed OrderReceivedDateYearMonth
+            OrderSentToLongtreeYearMonth: '',
+            PlansSentToDealerYearMonth: '',
+            SignedPlansReceivedYearMonth: '',
+            allStagesSelected: true // Reset to all stages selected
+          })}
+          className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+        >
+          Clear Filters
+        </button>
+      </div>
     </div>
   );
 };
