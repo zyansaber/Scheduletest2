@@ -32,6 +32,9 @@ const ScheduleDashboard = ({ data }) => {
           if (filters.model && item["Model"] !== filters.model) {
             return false;
           }
+          if (filters.modelYear && item["Model Year"] !== filters.modelYear) {
+            return false;
+          }
           if (filters.forecastYear && item["Forecast Production Date"]) {
             const dateParts = item["Forecast Production Date"].split('/');
             if (dateParts.length >= 3 && dateParts[2] !== filters.forecastYear) {
