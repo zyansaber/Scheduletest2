@@ -1,36 +1,25 @@
 import React from 'react';
 
-const DialogWrapper = ({ open, onClose, title, children }) => {
-  if (!open) return null;
+const DialogWrapper = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
-      <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-2xl w-full animate-fadeIn relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-black text-2xl font-light"
-          aria-label="Close dialog"
-        >
-          &times;
-        </button>
-        <div className="mb-4">
-          <h2 className="text-2xl font-semibold text-center text-gray-800">{title}</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white p-6 rounded-2xl shadow-2xl w-[90%] max-w-2xl transform transition-all animate-fadeIn">
+        <div className="flex justify-between items-center mb-4 border-b pb-2">
+          <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-red-500 text-2xl font-bold focus:outline-none"
+            aria-label="Close"
+          >
+            &times;
+          </button>
         </div>
-        <div className="max-h-[60vh] overflow-y-auto space-y-2 text-gray-700 px-2">
+        <div className="max-h-[60vh] overflow-y-auto text-gray-700">
           {children}
         </div>
       </div>
-
-      {/* Optional: fade-in animation */}
-      <style>{`
-        @keyframes fadeIn {
-          0% { transform: scale(0.95); opacity: 0; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.25s ease-out;
-        }
-      `}</style>
     </div>
   );
 };
