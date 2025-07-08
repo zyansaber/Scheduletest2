@@ -1,79 +1,90 @@
+import React, { useMemo, useState } from 'react';
+import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
-import React, { useMemo } from "react";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-
-const COLORS = [
-  "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF",
-  "#FF4560", "#775DD0", "#FEB019", "#00E396", "#0090FF"
-];
+const COLORS = ['#4CAF50', '#FF9800'];
 
 const ForecastYearBreakdown = ({ data }) => {
-  const yearSummary = useMemo(() => {
-    const summary = {};
-    data.forEach((item) => {
-      const chassis = item["Chassis"];
-      const forecastDate = item["Forecast Production Date"];
-      if (!forecastDate || !forecastDate.includes('/')) return;
-      const year = forecastDate.split("/")[2];
+  const [selectedYear, setSelectedYear] = useState(null);
+  const [showDealers, setShowDealers] = useState(false);
+  const [dealersData, setDealersData] = useState([]);
 
-      if (!summary[year]) {
-        summary[year] = { count: 0, noChassisDealers: new Set() };
-      }
-      summary[year].count += 1;
-      if (!chassis || chassis.trim() === "") {
-        summary[year].noChassisDealers.add(item["Dealer"]);
+  const yearData = useMemo(() => {
+    const summary = { "2025": { chassis: 0, nochassis: 0 }, "2026": { chassis: 0, nochassis: 0 } };
+
+    data.forEach(item => {
+      const date = item["Forecast Production Date"];
+      const chassis = item["Chassis"];
+      if (!date) return;
+      const year = date.split('/')[2];
+      if (summary[year]) {
+        if (chassis && chassis.trim()) summary[year].chassis++;
+        else summary[year].nochassis++;
       }
     });
 
-    return Object.entries(summary).map(([year, { count, noChassisDealers }]) => ({
-      name: year,
-      value: count,
-      dealers: Array.from(noChassisDealers)
-    }));
+    return summary;
   }, [data]);
 
+  const handleClick = (year, isChassis) => {
+    if (isChassis) return;
+    const filtered = {};
+    data.forEach(item => {
+      const date = item["Forecast Production Date"];
+      const chassis = item["Chassis"];
+      const dealer = item["Dealer"];
+      if (date && date.split('/')[2] === year && (!chassis || !chassis.trim())) {
+        filtered[dealer] = (filtered[dealer] || 0) + 1;
+      }
+    });
+    const dealerList = Object.entries(filtered).map(([dealer, count]) => ({ dealer, count }));
+    setDealersData(dealerList);
+    setSelectedYear(year);
+    setShowDealers(true);
+  };
+
   return (
-    <div style={{ width: "100%", height: 360 }}>
-      <ResponsiveContainer>
-        <PieChart>
-          <Pie
-            data={yearSummary}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            outerRadius={100}
-            label
-          >
-            {yearSummary.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+    <div>
+      <div className="flex flex-wrap justify-around">
+        {["2025", "2026"].map((year, index) => (
+          <div key={year}>
+            <h3 className="font-bold text-center mb-2">{year}</h3>
+            <PieChart width={300} height={250}>
+              <Pie
+                data={[
+                  { name: 'With Chassis', value: yearData[year].chassis },
+                  { name: 'No Chassis', value: yearData[year].nochassis }
+                ]}
+                cx={150}
+                cy={100}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+                onClick={(entry, i) => handleClick(year, i === 0)}
+              >
+                <Cell key="chassis" fill={COLORS[0]} />
+                <Cell key="nochassis" fill={COLORS[1]} />
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </div>
+        ))}
+      </div>
+
+      {showDealers && (
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow">
+          <h4 className="font-semibold text-lg mb-2">
+            {selectedYear} - No Chassis Dealer Breakdown
+          </h4>
+          <ul className="list-disc pl-5">
+            {dealersData.map(({ dealer, count }) => (
+              <li key={dealer}>
+                <span className="font-medium">{dealer}:</span> {count}
+              </li>
             ))}
-          </Pie>
-          <Tooltip
-            content={({ payload }) => {
-              if (!payload || !payload.length) return null;
-              const { name, value, payload: p } = payload[0];
-              return (
-                <div className="bg-white p-2 border rounded shadow text-sm">
-                  <div><strong>{name}</strong></div>
-                  <div>Total: {value}</div>
-                  {p.dealers && p.dealers.length > 0 && (
-                    <div className="mt-1">
-                      <div className="font-semibold">No Chassis Dealers:</div>
-                      <ul className="list-disc ml-4">
-                        {p.dealers.slice(0, 10).map((dealer, i) => (
-                          <li key={i}>{dealer}</li>
-                        ))}
-                      </ul>
-                      {p.dealers.length > 10 && <div>...and {p.dealers.length - 10} more</div>}
-                    </div>
-                  )}
-                </div>
-              );
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
