@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ScheduleTable from './ScheduleTable';
 import ScheduleFilters from './ScheduleFilters';
@@ -20,28 +19,35 @@ const ScheduleDashboard = ({ data }) => {
       return;
     }
 
-    if (data.length > 100) setIsFilteringData(true);
+    if (data.length > 100) {
+      setIsFilteringData(true);
+    }
 
     const filterTimeout = setTimeout(() => {
       const newFilteredData = data.filter(item => {
         try {
-          if (filters.dealer && filters.dealer !== 'all' && item["Dealer"] !== filters.dealer) return false;
-          if (filters.model && item["Model"] !== filters.model) return false;
-
+          if (filters.dealer && filters.dealer !== 'all' && item["Dealer"] !== filters.dealer) {
+            return false;
+          }
+          if (filters.model && item["Model"] !== filters.model) {
+            return false;
+          }
           if (filters.forecastYear && item["Forecast Production Date"]) {
             const dateParts = item["Forecast Production Date"].split('/');
-            if (dateParts.length >= 3 && dateParts[2] !== filters.forecastYear) return false;
+            if (dateParts.length >= 3 && dateParts[2] !== filters.forecastYear) {
+              return false;
+            }
           }
-
           if (filters.forecastYearMonth && item["Forecast Production Date"]) {
             const dateParts = item["Forecast Production Date"].split('/');
             if (dateParts.length >= 3) {
-              const itemYearMonth = \`\${dateParts[2]}-\${dateParts[1]}\`;
+              const itemYearMonth = `${dateParts[2]}-${dateParts[1]}`;
               if (itemYearMonth !== filters.forecastYearMonth) return false;
             }
           }
-
-          if (filters.modelRange && item["Chassis"] && !item["Chassis"].startsWith(filters.modelRange)) return false;
+          if (filters.modelRange && item["Chassis"] && !item["Chassis"].startsWith(filters.modelRange)) {
+            return false;
+          }
 
           const dateFields = [
             { filter: 'OrderSentToLongtreeYearMonth', field: 'Order Sent to Longtree' },
@@ -53,8 +59,10 @@ const ScheduleDashboard = ({ data }) => {
             if (filters[filter] && item[field]) {
               const dateParts = item[field].split('/');
               if (dateParts.length >= 3) {
-                const itemYearMonth = \`\${dateParts[2]}-\${dateParts[1]}\`;
-                if (itemYearMonth !== filters[filter]) return false;
+                const itemYearMonth = `${dateParts[2]}-${dateParts[1]}`;
+                if (itemYearMonth !== filters[filter]) {
+                  return false;
+                }
               }
             }
           }
@@ -95,18 +103,36 @@ const ScheduleDashboard = ({ data }) => {
           onClick={() => setShowCharts(!showCharts)}
           className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded flex items-center"
         >
-          {showCharts ? 'Hide Charts' : 'Show Charts'}
+          {showCharts ? (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-14-14z" />
+                <path fillRule="evenodd" d="M16.293 2.293a1 1 0 011.414 1.414l-14 14a1 1 0 01-1.414-1.414l14-14z" />
+              </svg>
+              Hide Charts
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd" />
+              </svg>
+              Show Charts
+            </>
+          )}
         </button>
       </div>
 
       {showCharts && (
         <>
-          <div className="w-full bg-white p-4 rounded-lg shadow-sm">
-            <ForecastYearBreakdown data={filteredData} />
-          </div>
           <div className="w-full">
             <ScheduleSidebar data={filteredData} />
           </div>
+
+          <div className="w-full bg-white p-4 rounded-lg shadow-sm">
+            <ForecastYearBreakdown data={filteredData} />
+          </div>
+
           <div className="w-full bg-white p-4 rounded-lg shadow-sm">
             <StagesByClassChart selectedStages={handleStageSelection} />
           </div>
