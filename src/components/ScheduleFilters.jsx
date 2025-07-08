@@ -31,21 +31,15 @@ const ScheduleFilters = ({ data, onFilterChange }) => {
   const regentProductionStages = React.useMemo(() => {
     if (!data) return [];
     const stages = new Set();
-    const seaFreightingStages = [];
-    
     data.forEach(item => {
-      if (item["Regent Production"]) {
-        const stage = item["Regent Production"];
-        if (stage.toLowerCase() === "finished") return;
-        if (stage.includes('-')) {
-          seaFreightingStages.push(stage);
-          stages.add("Sea Freighting");
-        } else {
-          stages.add(stage);
-        }
+      const stage = item["Regent Production"];
+      if (!stage || stage.toLowerCase() === "finished") return;
+      if (stage.includes('-')) {
+        stages.add("Sea Freighting");
+      } else {
+        stages.add(stage);
       }
     });
-    
     return Array.from(stages).sort();
   }, [data]);
 
@@ -74,77 +68,64 @@ const ScheduleFilters = ({ data, onFilterChange }) => {
   }, [regentProductionStages]);
 
   const forecastYears = React.useMemo(() => {
-    if (!data) return [];
     const years = new Set();
-    data.forEach(item => {
-      if (item["Forecast Production Date"]) {
-        const dateParts = item["Forecast Production Date"].split('/');
-        if (dateParts.length >= 3) years.add(dateParts[2]);
-      }
+    data?.forEach(item => {
+      const parts = item["Forecast Production Date"]?.split('/');
+      if (parts?.length >= 3) years.add(parts[2]);
     });
-    return ['', ...Array.from(years).filter(year => year !== "2024").sort()];
+    return ['', ...Array.from(years).filter(y => y !== "2024").sort()];
   }, [data]);
 
   const forecastMonths = React.useMemo(() => {
-    if (!data || !filters.forecastYear) return [];
     const months = new Set();
-    data.forEach(item => {
-      if (item["Forecast Production Date"]) {
-        const dateParts = item["Forecast Production Date"].split('/');
-        if (dateParts.length >= 3 && dateParts[2] === filters.forecastYear) {
-          const yearMonth = `${dateParts[2]}-${dateParts[1]}`;
-          months.add(yearMonth);
-        }
+    data?.forEach(item => {
+      const parts = item["Forecast Production Date"]?.split('/');
+      if (parts?.length >= 3 && parts[2] === filters.forecastYear) {
+        months.add(`${parts[2]}-${parts[1]}`);
       }
     });
     return ['', ...Array.from(months).sort()];
   }, [data, filters.forecastYear]);
 
   const modelRanges = React.useMemo(() => {
-    if (!data) return [];
     const prefixes = new Set();
-    data.forEach(item => {
-      if (item["Chassis"] && item["Chassis"].length >= 3) {
-        prefixes.add(item["Chassis"].substring(0, 3));
-      }
+    data?.forEach(item => {
+      if (item["Chassis"]?.length >= 3) prefixes.add(item["Chassis"].substring(0, 3));
     });
     return ['', ...Array.from(prefixes).sort()];
   }, [data]);
 
   const handleFilterChange = (filterName, value) => {
-    if (filterName === 'forecastYear' && value !== filters.forecastYear) {
+    if (filterName === 'forecastYear') {
       setFilters(prev => ({
         ...prev,
-        [filterName]: value,
+        forecastYear: value,
         forecastYearMonth: ''
       }));
     } else {
-      setFilters(prev => ({
-        ...prev,
-        [filterName]: value
-      }));
+      setFilters(prev => ({ ...prev, [filterName]: value }));
     }
   };
 
   const handleStageChange = (stage) => {
     setFilters(prev => {
       if (stage === "all") {
-        const newAllStagesSelected = !prev.allStagesSelected;
+        const allSelected = !prev.allStagesSelected;
         return {
           ...prev,
-          selectedStages: newAllStagesSelected ? [...regentProductionStages] : [],
-          allStagesSelected: newAllStagesSelected
+          selectedStages: allSelected ? [...regentProductionStages] : [],
+          allStagesSelected: allSelected
         };
       }
-      const updatedStages = prev.selectedStages.includes(stage)
+
+      const updated = prev.selectedStages.includes(stage)
         ? prev.selectedStages.filter(s => s !== stage)
         : [...prev.selectedStages, stage];
-      const newAllStagesSelected = updatedStages.length === regentProductionStages.length &&
-        regentProductionStages.every(s => updatedStages.includes(s));
+
       return {
         ...prev,
-        selectedStages: updatedStages,
-        allStagesSelected: newAllStagesSelected
+        selectedStages: updated,
+        allStagesSelected: updated.length === regentProductionStages.length
       };
     });
   };
@@ -153,41 +134,117 @@ const ScheduleFilters = ({ data, onFilterChange }) => {
     onFilterChange(filters);
   }, [filters, onFilterChange]);
 
+  const getMonthName = (num) => ["", "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ][parseInt(num, 10)];
+
+  const formatYearMonth = (ym) => {
+    if (!ym) return 'All Months';
+    const [year, month] = ym.split('-');
+    return `${getMonthName(month)} ${year}`;
+  };
+
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm mb-6 text-base" style={{ zoom: '125%' }}>
       <h2 className="text-lg font-medium text-gray-800 mb-4">Filters</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Dealer */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Dealer</label>
-          <select className="w-full rounded-md border py-2 px-3" value={filters.dealer}
-            onChange={(e) => handleFilterChange('dealer', e.target.value)}>
+          <select
+            className="w-full border rounded py-2 px-3"
+            value={filters.dealer}
+            onChange={(e) => handleFilterChange('dealer', e.target.value)}
+          >
             <option value="">All Dealers</option>
-            {uniqueDealers.map(dealer => dealer !== 'all' && <option key={dealer} value={dealer}>{dealer}</option>)}
+            {uniqueDealers.map(d => d !== 'all' && <option key={d} value={d}>{d}</option>)}
           </select>
         </div>
+
+        {/* Model */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
-          <select className="w-full rounded-md border py-2 px-3" value={filters.model}
-            onChange={(e) => handleFilterChange('model', e.target.value)}>
+          <select
+            className="w-full border rounded py-2 px-3"
+            value={filters.model}
+            onChange={(e) => handleFilterChange('model', e.target.value)}
+          >
             <option value="">All Models</option>
-            {uniqueModels.map(model => model && <option key={model} value={model}>{model}</option>)}
+            {uniqueModels.map(m => m && <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
+
+        {/* Model Year - NEW */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Model Year</label>
-          <select className="w-full rounded-md border py-2 px-3" value={filters.modelYear}
-            onChange={(e) => handleFilterChange('modelYear', e.target.value)}>
+          <select
+            className="w-full border rounded py-2 px-3"
+            value={filters.modelYear}
+            onChange={(e) => handleFilterChange('modelYear', e.target.value)}
+          >
             <option value="">All Years</option>
-            {uniqueModelYears.map(year => year && <option key={year} value={year}>{year}</option>)}
+            {uniqueModelYears.map(yr => <option key={yr} value={yr}>{yr}</option>)}
           </select>
         </div>
+
+        {/* Forecast Year */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Forecast Year</label>
+          <select
+            className="w-full border rounded py-2 px-3"
+            value={filters.forecastYear}
+            onChange={(e) => handleFilterChange('forecastYear', e.target.value)}
+          >
+            {forecastYears.map(yr => <option key={yr} value={yr}>{yr || 'All Years'}</option>)}
+          </select>
+        </div>
+
+        {/* Forecast Month */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Forecast Month</label>
+          <select
+            className="w-full border rounded py-2 px-3"
+            value={filters.forecastYearMonth}
+            onChange={(e) => handleFilterChange('forecastYearMonth', e.target.value)}
+            disabled={!filters.forecastYear}
+          >
+            {forecastMonths.map(m => <option key={m} value={m}>{formatYearMonth(m)}</option>)}
+          </select>
+        </div>
+
+        {/* Model Range */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Model Range</label>
-          <select className="w-full rounded-md border py-2 px-3" value={filters.modelRange}
-            onChange={(e) => handleFilterChange('modelRange', e.target.value)}>
-            {modelRanges.map(range => <option key={range} value={range}>{range || 'All Ranges'}</option>)}
+          <select
+            className="w-full border rounded py-2 px-3"
+            value={filters.modelRange}
+            onChange={(e) => handleFilterChange('modelRange', e.target.value)}
+          >
+            {modelRanges.map(r => <option key={r} value={r}>{r || 'All Ranges'}</option>)}
           </select>
         </div>
+      </div>
+
+      {/* Clear Filters */}
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={() => setFilters({
+            dealer: '',
+            forecastYear: '',
+            forecastYearMonth: '',
+            selectedStages: [...regentProductionStages],
+            modelRange: '',
+            model: '',
+            modelYear: '',
+            OrderSentToLongtreeYearMonth: '',
+            PlansSentToDealerYearMonth: '',
+            SignedPlansReceivedYearMonth: '',
+            allStagesSelected: true
+          })}
+          className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+        >
+          Clear Filters
+        </button>
       </div>
     </div>
   );
