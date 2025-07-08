@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 
+// Debounce hook to prevent re-filtering on every keystroke
+function useDebounce(value, delay = 300) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debounced;
+}
+
 const ScheduleFilters = ({ data, onFilterChange }) => {
+  const debouncedModelRange = useDebounce(filters.modelRange, 300);
   // Extract unique models
   const uniqueModels = React.useMemo(() => {
     if (!data) return [];
@@ -187,7 +198,7 @@ const ScheduleFilters = ({ data, onFilterChange }) => {
 
   // Pass filters up to parent whenever they change
   useEffect(() => {
-    onFilterChange(filters);
+    onFilterChange({ ...filters, modelRange: debouncedModelRange });
   }, [filters, onFilterChange]);
 
   // Month name formatter
