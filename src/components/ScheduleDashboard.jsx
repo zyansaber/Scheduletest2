@@ -4,8 +4,8 @@ import ScheduleTable from './ScheduleTable';
 import ScheduleFilters from './ScheduleFilters';
 import ScheduleSidebar from './ScheduleSidebar';
 import StagesByClassChart from './charts/StagesByClassChart';
-import LoadingOverlay from './LoadingOverlay';
 import ForecastYearBreakdown from './charts/ForecastYearBreakdown';
+import LoadingOverlay from './LoadingOverlay';
 
 const ScheduleDashboard = ({ data }) => {
   const [filteredData, setFilteredData] = useState(data);
@@ -19,7 +19,6 @@ const ScheduleDashboard = ({ data }) => {
       setFilteredData([]);
       return;
     }
-
     if (data.length > 100) setIsFilteringData(true);
 
     const filterTimeout = setTimeout(() => {
@@ -67,10 +66,7 @@ const ScheduleDashboard = ({ data }) => {
     return () => clearTimeout(filterTimeout);
   }, [data, filters]);
 
-  const handleFilterChange = (newFilters) => {
-    setFilters(newFilters);
-  };
-
+  const handleFilterChange = (newFilters) => setFilters(newFilters);
   const handleStageSelection = useCallback((stages) => {
     if (stages && stages.length > 0) {
       setFilters(prev => ({
@@ -89,21 +85,31 @@ const ScheduleDashboard = ({ data }) => {
           onClick={() => setShowCharts(!showCharts)}
           className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded flex items-center"
         >
-          {showCharts ? "Hide Charts" : "Show Charts"}
+          {showCharts ? (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-14-14z" />
+                <path fillRule="evenodd" d="M16.293 2.293a1 1 0 011.414 1.414l-14 14a1 1 0 01-1.414-1.414l14-14z" />
+              </svg>
+              Hide Charts
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd" />
+              </svg>
+              Show Charts
+            </>
+          )}
         </button>
       </div>
 
       {showCharts && (
         <>
-          <div className="w-full">
-            <ScheduleSidebar data={filteredData} />
-          </div>
-          <div className="w-full bg-white p-4 rounded-lg shadow-sm">
-            <ForecastYearBreakdown data={filteredData} />
-          </div>
-          <div className="w-full bg-white p-4 rounded-lg shadow-sm">
-            <StagesByClassChart selectedStages={handleStageSelection} />
-          </div>
+          <div className="w-full"><ScheduleSidebar data={filteredData} /></div>
+          <div className="w-full bg-white p-4 rounded-lg shadow-sm"><ForecastYearBreakdown data={filteredData} /></div>
+          <div className="w-full bg-white p-4 rounded-lg shadow-sm"><StagesByClassChart selectedStages={handleStageSelection} /></div>
         </>
       )}
 
